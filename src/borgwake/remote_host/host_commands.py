@@ -1,11 +1,11 @@
 import asyncio
-import subprocess
 import os
+import subprocess
 import time
 
-from plug_init import plug_init, PlugInitError
-from ip_finder import get_host_ip
-from logger import logger
+from src.borgwake.remote_host.ip_finder import get_host_ip
+from src.borgwake.remote_host.plug_init import plug_init, PlugInitError
+from src.borgwake.utils.logger import logger
 
 plug = None
 

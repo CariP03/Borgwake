@@ -5,12 +5,12 @@ load_dotenv()  # load variables
 import sys
 import asyncio
 
-import host_commands as host
-from backup import cycle_backups, BackupError
-from logger import logger
-from plug_init import PlugInitError
-from host_commands import HostError
-from telegram_bot import send_backup_result
+from src.borgwake.remote_host import host_commands as host
+from src.borgwake.core.backup import cycle_backups, BackupError
+from src.borgwake.utils.logger import logger
+from src.borgwake.remote_host.plug_init import PlugInitError
+from src.borgwake.remote_host.host_commands import HostError
+from src.borgwake.utils.telegram_bot import send_backup_result
 
 
 async def main():

@@ -3,7 +3,7 @@ from scapy.layers.l2 import ARP, Ether
 from scapy.sendrecv import srp
 import time
 
-from logger import logger
+from src.borgwake.utils.logger import logger
 
 _cached_host = None
 
