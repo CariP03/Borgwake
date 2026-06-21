@@ -5,7 +5,7 @@ import time
 
 from plug_init import plug_init, PlugInitError
 from ip_finder import get_host_ip
-from logger import logger
+from src.borgwake.utils.logger import logger
 
 plug = None
 

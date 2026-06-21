@@ -3,7 +3,7 @@ import os
 from pathlib import Path, PurePosixPath
 
 from ip_finder import get_host_ip
-from logger import logger, log_subprocess
+from src.borgwake.utils.logger import logger, log_subprocess
 
 
 # raised when unable to proceed with backup

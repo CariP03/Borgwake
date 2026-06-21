@@ -1,7 +1,7 @@
 import os
 from kasa import Discover, Credentials
 
-from logger import logger
+from src.borgwake.utils.logger import logger
 
 
 # raised when the plug initialization fails
