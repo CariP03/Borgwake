@@ -3,7 +3,7 @@ from telegram.constants import ParseMode
 from telegram.error import TelegramError
 import os
 
-from logger import logger
+from src.borgwake.utils.logger import logger
 
 
 async def send_backup_result(status: int):
