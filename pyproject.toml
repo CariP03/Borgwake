@@ -1,0 +1,12 @@
+[project]
+name = "borgwake"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "python-dotenv>=1.2.2",
+    "python-kasa>=0.10.2",
+    "python-telegram-bot>=22.8",
+    "scapy>=2.7.0",
+]
