@@ -1,4 +1,4 @@
-"""Contains the logging setup function."""
+"""Logging initialization for Borgwake."""
 
 import logging
 from datetime import date, datetime
@@ -8,7 +8,11 @@ from src.borgwake.config import LOG_DIR, LOG_FILE
 
 
 def setup_logging():
-    """Configures the global logging system for the application."""
+    """Configures the global logging system for the application.
+
+    Sets up the global root logger with both console output and daily
+    rotating file handlers, including fallback logic for intermittent execution.
+    """
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -1,10 +1,10 @@
-"""Contains functions to operate on network entities.
+"""Network utilities for entity validation and comparison.
 
-These functions validate, clean network or compare entities such as IP or MAC addresses.
+Provide functions to validate, clean and compare network entities such as IP or MAC addresses.
 """
 
-import re
 import ipaddress
+import re
 
 
 def validate_ip(ip: str) -> bool:

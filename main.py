@@ -13,7 +13,7 @@ from src.borgwake.utils.telegram_bot import send_backup_result
 async def main():
     setup_logging()
 
-    logger = logging.getLogger("__name__")
+    logger = logging.getLogger(__name__)
 
     was_online = None
     try:

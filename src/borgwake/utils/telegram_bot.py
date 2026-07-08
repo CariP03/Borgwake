@@ -18,7 +18,7 @@ async def send_backup_result(status: int) -> None:
         status (int): Backup status code.
             If 0 the backup is successful.
             If 1 the backup completed with warnings.
-            If 2 the backup completed with errors.
+            Else the backup completed with errors.
     """
 
     if status == 0:
