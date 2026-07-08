@@ -1,12 +1,26 @@
+"""Telegram notification services for backup monitoring."""
+
+import logging
+
 from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
-import os
 
-from src.borgwake.utils.logger import logger
+from src.borgwake.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+logger = logging.getLogger(__name__)
 
 
-async def send_backup_result(status: int):
+async def send_backup_result(status: int) -> None:
+    """Send backup result message.
+
+    Args:
+        status (int): Backup status code.
+            If 0 the backup is successful.
+            If 1 the backup completed with warnings.
+            If 2 the backup completed with errors.
+    """
+
     if status == 0:
         text = "🟢 Backup completed *SUCCESSFULLY*!"
     elif status == 1:
@@ -14,19 +28,17 @@ async def send_backup_result(status: int):
     else:
         text = "🔴 Backup completed with *ERRORS*! Check logs for more details."
 
-    token = os.getenv('TELEGRAM_BOT_TOKEN')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+        logger.info(f"Sending message to Telegram chat: {text}")
 
-    if token and chat_id:
-        logger.info(f"Sending message to Telegram chat.")
-        # define bot
-        bot = Bot(token=token)
-        # send message
+        bot = Bot(token=TELEGRAM_BOT_TOKEN)
         try:
             async with bot:
-                await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
+                await bot.send_message(
+                    chat_id=TELEGRAM_CHAT_ID, text=text, parse_mode=ParseMode.MARKDOWN
+                )
         except TelegramError as e:
-            logger.error("Failed to send message.", exc_info=e)
+            logger.error("Failed to send message to Telegram.", exc_info=e)
 
     else:
-        logger.info('Telegram Bot not configured. No message will be sent.')
+        logger.info("Telegram Bot not configured. No message will be sent.")
