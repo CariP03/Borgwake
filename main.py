@@ -1,19 +1,20 @@
-from dotenv import load_dotenv
-
-load_dotenv()  # load variables
-
-import sys
 import asyncio
+import logging
+import sys
 
+from src.borgwake.core.backup import BackupError, cycle_backups
 from src.borgwake.remote_host import host_commands as host
-from src.borgwake.core.backup import cycle_backups, BackupError
-from src.borgwake.utils.logger import logger
-from src.borgwake.remote_host.plug_init import PlugInitError
 from src.borgwake.remote_host.host_commands import HostError
+from src.borgwake.remote_host.plug_init import PlugInitError
+from src.borgwake.utils.logger import setup_logging
 from src.borgwake.utils.telegram_bot import send_backup_result
 
 
 async def main():
+    setup_logging()
+
+    logger = logging.getLogger("__name__")
+
     was_online = None
     try:
         was_online = await host.start_host()
@@ -51,5 +52,5 @@ async def main():
     return exit_code
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
