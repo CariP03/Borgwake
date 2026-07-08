@@ -7,7 +7,7 @@ import ipaddress
 import re
 
 
-def validate_ip(ip: str) -> bool:
+def is_valid_ip(ip: str) -> bool:
     """Validates IPv4 address."""
 
     try:
@@ -17,7 +17,7 @@ def validate_ip(ip: str) -> bool:
         return False
 
 
-def validate_mac(mac: str) -> bool:
+def is_valid_mac(mac: str) -> bool:
     """Validates MAC address."""
 
     if re.match("[0-9a-f]{12}$", _clean_mac(mac)):
