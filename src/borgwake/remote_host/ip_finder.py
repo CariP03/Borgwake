@@ -1,16 +1,32 @@
-import os
-from scapy.layers.l2 import ARP, Ether
-from scapy.sendrecv import srp
+"""Locate the remote host's IP address, either from static config or via ARP scan."""
+
+import logging
 import time
 
-from src.borgwake.utils.logger import logger
+from scapy.layers.l2 import ARP, Ether
+from scapy.sendrecv import srp
 
-_cached_host = None
+from src.borgwake.config import HOST_STATIC_IP, REMOTE_HOST_MAC, SUBNET
+from src.borgwake.utils.network import compare_mac
+
+logger = logging.getLogger(__name__)
+
+_CACHE_TTL_SECONDS = 300
+
+_cached_host: str | None = None
+_cached_at: float = 0.0
 
 
-def find_ip_by_mac(target_mac, subnet=None, attempts=6, timeout=4):
+def _find_ip_by_mac(
+    target_mac: str,
+    subnet: str | None = None,
+    attempts: int = 6,
+    timeout: int = 4,
+) -> str | None:
+    """Scan the subnet using ARP to find the IP associated with a MAC address."""
+
     if subnet is None:
-        subnet = os.getenv("SUBNET", "192.168.1.0/24")
+        subnet = SUBNET
 
     arp = ARP(pdst=subnet)
     ether = Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -18,28 +34,58 @@ def find_ip_by_mac(target_mac, subnet=None, attempts=6, timeout=4):
 
     try:
         for i in range(attempts):
-            logger.debug(f"Attempt {i + 1}/{attempts}: Scanning subnet {subnet} for MAC {target_mac}")
+            logger.debug(
+                "Attempt %s/%s: Scanning subnet %s for MAC %s",
+                i + 1,
+                attempts,
+                subnet,
+                target_mac,
+            )
+
             result = srp(packet, timeout=timeout, verbose=False)[0]
             for sent, received in result:
-                if received.hwsrc.lower() == target_mac.lower():
-                    logger.info(f"Found IP: {received.psrc} for MAC: {target_mac}")
+                if compare_mac(received.hwsrc, target_mac):
+                    logger.info("Found IP: %s for MAC: %s", received.psrc, target_mac)
+
                     return received.psrc
+
             time.sleep(1)
 
-        logger.warning(f"Failed to find IP for MAC {target_mac}")
+        logger.warning(
+            "Failed to find IP for MAC %s after %s attempts.", target_mac, attempts
+        )
+
         return None
 
-    except Exception as e:
-        logger.error(f"Error while searching IP for MAC {target_mac}: {str(e)}", exc_info=True)
+    except Exception:
+        logger.warning("Error while searching IP for MAC %s", target_mac, exc_info=True)
         return None
 
 
-def get_host_ip():
-    global _cached_host
-    if _cached_host is None:
-        _cached_host = os.getenv("HOST_STATIC_IP")
-        if _cached_host is not None:
-            logger.info(f"Using static IP: {_cached_host}")
-        else:
-            _cached_host = find_ip_by_mac(os.getenv('REMOTE_HOST_MAC'))
+def get_host_ip(force_refresh: bool = False) -> str | None:
+    """Get the host IP from static configuration, or via a cached ARP scan.
+
+    If HOST_STATIC_IP is set, it is always used and never expires.
+    Otherwise, the ARP-resolved IP is cached for _CACHE_TTL_SECONDS to avoid
+    re-scanning on every call, but re-resolved after expiry or when
+    force_refresh is True (e.g. after a failed ping) to pick up IP changes.
+    """
+
+    global _cached_host, _cached_at
+
+    if HOST_STATIC_IP:
+        return HOST_STATIC_IP
+
+    cache_expired = (time.monotonic() - _cached_at) > _CACHE_TTL_SECONDS
+    if _cached_host is None or cache_expired or force_refresh:
+        logger.info("Scanning network for MAC: %s", REMOTE_HOST_MAC)
+
+        resolved = _find_ip_by_mac(REMOTE_HOST_MAC)
+        if resolved is not None:
+            _cached_host = resolved
+            _cached_at = time.monotonic()
+        elif cache_expired:
+            # Scan failed and old cache is stale: don't keep serving it.
+            _cached_host = None
+
     return _cached_host
