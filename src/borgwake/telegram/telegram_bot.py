@@ -9,7 +9,7 @@ from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
-from borgwake.errors import EnvConfigurationError
+from borgwake.errors import ConfigurationError
 from borgwake.notifier.notifier import Notifier, Status
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def load_telegram_bot_settings() -> TelegramBotSettings | None:
         return None
 
     if bot_token is None or chat_id is None:
-        raise EnvConfigurationError(
+        raise ConfigurationError(
             "Telegram Bot is partially configured: Both TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set."
         )
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from kasa import Credentials
 
-from borgwake.errors import EnvConfigurationError
+from borgwake.errors import ConfigurationError
 from borgwake.networking.identifiers import validate_mac
 
 
@@ -32,18 +32,18 @@ def load_kasa_settings() -> KasaSettings | None:
         return None
 
     if kasa_email is None or kasa_password is None or kasa_plug_mac is None:
-        raise EnvConfigurationError(
+        raise ConfigurationError(
             "Kasa Plug is partially configured: All KASA_EMAIL, KASA_PASSWORD and KASA_PLUG_MAC must be set."
         )
 
     try:
         kasa_email = _validate_email(kasa_email)
     except ValueError as e:
-        raise EnvConfigurationError(f"Invalid Kasa e-mail: {kasa_email!r}") from e
+        raise ConfigurationError(f"Invalid Kasa e-mail: {kasa_email!r}") from e
     try:
         kasa_plug_mac = validate_mac(kasa_plug_mac)
     except ValueError as e:
-        raise EnvConfigurationError(f"Invalid Kasa plug MAC: {kasa_plug_mac!r}") from e
+        raise ConfigurationError(f"Invalid Kasa plug MAC: {kasa_plug_mac!r}") from e
 
     return KasaSettings(Credentials(kasa_email, kasa_password), kasa_plug_mac)
 

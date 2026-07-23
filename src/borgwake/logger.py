@@ -7,7 +7,7 @@ from datetime import date, datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
-_PROJECT_ROOT: Path = Path(__file__).resolve().parents[3]
+_PROJECT_ROOT: Path = Path(__file__).resolve().parents[2]
 _DEFAULT_LOG_DIR = _PROJECT_ROOT / "logs"
 
 

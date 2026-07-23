@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from logging import getLogger
 
-from borgwake.errors import EnvConfigurationError
+from borgwake.errors import ConfigurationError
 from borgwake.networking.reachability_checker import ReachabilityChecker
 from borgwake.power.abstractions import ShutdownFailure, TurnableOff
 
@@ -40,7 +40,7 @@ def load_ssh_shutdown_settings() -> SSHShutdownSettings | None:
     try:
         ssh_timeout = int(raw_ssh_timeout)
     except ValueError as e:
-        raise EnvConfigurationError(
+        raise ConfigurationError(
             f"Invalid SHUTDOWN_TIME: {raw_ssh_timeout!r} is not an integer."
         ) from e
 
