@@ -6,6 +6,8 @@ from pathlib import Path
 
 from borgwake.status import Status
 
+class BackupExecutionError(Exception):
+    """A system or environment failure prevented the backup from executing."""
 
 @dataclass
 class BackupJob:
@@ -13,12 +15,16 @@ class BackupJob:
 
     repo_name: str
     repo_passphrase: str
-    script_path: Path
+    script_path: str
 
 
 class BackupExecutor(ABC):
     """Abstraction for backup executor."""
 
     @abstractmethod
-    def execute_backup(self, job: BackupJob) -> Status:
-        """Execute a backup using job settings."""
+    async def execute_backup(self, job: BackupJob) -> Status:
+        """Execute a backup using job settings.
+
+        Raises:
+            BackupExecutionError: if a system or environment failure occurred.
+        """
