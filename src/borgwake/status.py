@@ -1,9 +1,9 @@
 """Provides standard status enumerations for process outcomes."""
 
-from enum import Enum
+from enum import IntEnum
 
 
-class Status(Enum):
+class Status(IntEnum):
     """Represents the execution outcome of a process."""
 
     SUCCESS = 0
