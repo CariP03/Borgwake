@@ -10,7 +10,8 @@ from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
 from borgwake.errors import ConfigurationError
-from borgwake.notifier.notifier import Notifier, Status
+from borgwake.notifier.notifier import Notifier
+from borgwake.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ def load_telegram_bot_settings() -> TelegramBotSettings | None:
     """Load telegram bot settings from the environment.
 
     Raises:
-        EnvConfigurationError: if environment variables are partially configured.
+        ConfigurationError: if environment variables are partially configured.
     """
 
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
