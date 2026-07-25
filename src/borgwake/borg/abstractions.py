@@ -2,12 +2,20 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pathlib import Path
+from enum import IntEnum
 
-from borgwake.status import Status
+
+class BackupStatus(IntEnum):
+    """Represents the execution outcome of the backup process."""
+
+    SUCCESS = 0
+    WARNING = 1
+    ERROR = 2
+
 
 class BackupExecutionError(Exception):
     """A system or environment failure prevented the backup from executing."""
+
 
 @dataclass
 class BackupJob:
@@ -22,7 +30,7 @@ class BackupExecutor(ABC):
     """Abstraction for backup executor."""
 
     @abstractmethod
-    async def execute_backup(self, job: BackupJob) -> Status:
+    async def execute_backup(self, job: BackupJob) -> BackupStatus:
         """Execute a backup using job settings.
 
         Raises:

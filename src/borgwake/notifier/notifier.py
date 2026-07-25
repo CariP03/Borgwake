@@ -2,14 +2,13 @@
 
 from abc import ABC, abstractmethod
 
-from borgwake.status import Status
+from borgwake.borg.abstractions import BackupStatus
 
 
 class Notifier(ABC):
     """Abstraction of a notifier."""
 
     @abstractmethod
-    async def notify(self, status: Status) -> None:
+    async def notify(self, status: BackupStatus) -> None:
         """Send a notification to an external service."""
 
-        pass

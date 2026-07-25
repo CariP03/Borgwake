@@ -7,8 +7,12 @@ from logging import getLogger
 from pathlib import Path
 from typing import override
 
-from borgwake.borg.abstractions import BackupExecutionError, BackupExecutor, BackupJob
-from borgwake.status import Status
+from borgwake.borg.abstractions import (
+    BackupExecutionError,
+    BackupExecutor,
+    BackupJob,
+    BackupStatus,
+)
 
 logger = getLogger(__name__)
 
@@ -50,7 +54,7 @@ class BorgBackupExecutor(BackupExecutor):
         self._settings = settings
 
     @override
-    async def execute_backup(self, job: BackupJob) -> Status:
+    async def execute_backup(self, job: BackupJob) -> BackupStatus:
         try:
             borg_repo = f"ssh://{self._settings.username}@{self._settings.host}{self._settings.repo_base_path}/{job.repo_name}"
 
@@ -70,19 +74,21 @@ class BorgBackupExecutor(BackupExecutor):
                 stderr=asyncio.subprocess.STDOUT,
             )
             output, _ = await process.communicate()
-            logger.debug("Backup script %s output: %s", job.script_path, output.decode())
+            logger.debug(
+                "Backup script %s output: %s", job.script_path, output.decode()
+            )
 
             return_code = process.returncode
 
             if return_code == BORG_SUCCESS_RETURN_CODE:
                 logger.info("Backup succeeded")
-                return Status.SUCCESS
+                return BackupStatus.SUCCESS
             elif return_code == BORG_WARNING_RETURN_CODE:
                 logger.warning("Backup completed with warnings")
-                return Status.WARNING
+                return BackupStatus.WARNING
             else:
                 logger.error("Backup failed")
-                return Status.ERROR
+                return BackupStatus.ERROR
 
         except (OSError, KeyError) as e:
             raise BackupExecutionError(

@@ -9,9 +9,9 @@ from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
+from borgwake.borg.abstractions import BackupStatus
 from borgwake.errors import ConfigurationError
 from borgwake.notifier.notifier import Notifier
-from borgwake.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +45,15 @@ def load_telegram_bot_settings() -> TelegramBotSettings | None:
     return TelegramBotSettings(bot_token, chat_id)
 
 
-def _get_message_text(status: Status) -> str:
+def _get_message_text(status: BackupStatus) -> str:
     """Parse the status in a Telegram Markdown message."""
 
     match status:
-        case Status.SUCCESS:
+        case BackupStatus.SUCCESS:
             return "🟢 Backup completed *SUCCESSFULLY*!"
-        case Status.WARNING:
+        case BackupStatus.WARNING:
             return "🟡 Backup completed with *WARNINGS*! Check logs for more details."
-        case Status.ERROR:
+        case BackupStatus.ERROR:
             return "🔴 Backup completed with *ERRORS*! Check logs for more details."
         case _:
             raise TypeError(f"Unknown status: {status}")
@@ -66,7 +66,7 @@ class TelegramNotifier(Notifier):
         self._settings = settings
 
     @override
-    async def notify(self, status: Status) -> None:
+    async def notify(self, status: BackupStatus) -> None:
         text = _get_message_text(status)
 
         logger.info(f"Sending the following message to Telegram chat: {text}")
