@@ -37,7 +37,7 @@ def load_arp_settings() -> ArpSettings | None:
     Returns None if REMOTE_HOST_MAC is not set.
 
     Raises:
-        EnvConfigurationError: if an env variable is set but invalid.
+        ConfigurationError: if an env variable is set but invalid.
     """
 
     raw_target_mac = os.getenv("REMOTE_HOST_MAC")
