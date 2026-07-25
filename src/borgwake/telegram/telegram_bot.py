@@ -11,7 +11,7 @@ from telegram.error import TelegramError
 
 from borgwake.backup.abstractions import BackupStatus
 from borgwake.errors import ConfigurationError
-from borgwake.notifier.notifier import Notifier
+from borgwake.notifier.notifier import Notifier, NotifierError
 
 logger = logging.getLogger(__name__)
 
@@ -80,4 +80,4 @@ class TelegramNotifier(Notifier):
                     parse_mode=ParseMode.MARKDOWN,
                 )
         except TelegramError as e:
-            logger.error("Failed to send message to Telegram.", exc_info=e)
+            raise NotifierError("An error occurred while notifying Telegram.") from e
