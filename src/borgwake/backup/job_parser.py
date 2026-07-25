@@ -1,11 +1,27 @@
 """Parses raw repository configuration data into BackupJob instances."""
 
+import os
 from pathlib import Path
 
 from borgwake.backup.abstractions import BackupJob
 from borgwake.errors import ConfigurationError
+from borgwake.yaml_reader import load_yaml
 
 _REQUIRED_KEYS = ("repo_name", "script_name", "repo_passphrase")
+
+
+def load_backup_jobs() -> list[dict] | None:
+    """Load the backup jobs from the repository.
+
+    Returns None if BACKUP_JOBS_YAML_PATH is not set.
+    """
+
+    raw_jobs_yaml_path = os.getenv("BACKUP_JOBS_YAML_PATH")
+
+    if raw_jobs_yaml_path is None:
+        return None
+
+    return load_yaml(Path(raw_jobs_yaml_path))
 
 
 def parse_backup_jobs(repos_data: list[dict], scripts_dir: Path) -> list[BackupJob]:
