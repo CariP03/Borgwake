@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import override
 
-from kasa import SmartDevice
+from kasa import Device
 
 from borgwake.power.abstractions import (
     ShutdownFailure,
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class KasaPlug(TurnableOn, TurnableOff):
     """Power-control operations for an already-connected Kasa smart plug."""
 
-    def __init__(self, device: SmartDevice, power_cycle_delay: int):
+    def __init__(self, device: Device, power_cycle_delay: int):
         self._device = device
         self._power_cycle_delay = power_cycle_delay
 
