@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from borgwake.borg.abstractions import BackupStatus
+from borgwake.backup.abstractions import BackupStatus
 
 
 class Notifier(ABC):

@@ -1,7 +1,7 @@
 """Provides the orchestrator logic to run the whole workflow."""
 
-from borgwake.borg.abstractions import BackupExecutor, BackupJob, BackupStatus
-from borgwake.borg.backup_orchestrator import cycle_backups
+from borgwake.backup.abstractions import BackupExecutor, BackupJob, BackupStatus
+from borgwake.backup.backup_orchestrator import cycle_backups
 from borgwake.networking.reachability_checker import ReachabilityChecker
 from borgwake.notifier.notifier import Notifier
 from borgwake.power.remote_host_power_controller import RemoteHostPowerController

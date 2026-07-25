@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from borgwake.borg.abstractions import BackupJob
+from borgwake.backup.abstractions import BackupJob
 from borgwake.errors import ConfigurationError
 
 _REQUIRED_KEYS = ("repo_name", "script_name", "repo_passphrase")

@@ -1,7 +1,7 @@
 """Provides an orchestrator to cycle backup jobs."""
 
-from borgwake.borg.abstractions import BackupExecutor, BackupJob, BackupStatus
-from borgwake.borg.borg import logger
+from borgwake.backup.abstractions import BackupExecutor, BackupJob, BackupStatus
+from borgwake.backup.borg import logger
 
 
 async def cycle_backups(

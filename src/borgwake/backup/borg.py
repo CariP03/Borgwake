@@ -7,7 +7,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import override
 
-from borgwake.borg.abstractions import (
+from borgwake.backup.abstractions import (
     BackupExecutionError,
     BackupExecutor,
     BackupJob,

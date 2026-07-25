@@ -9,7 +9,7 @@ from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
-from borgwake.borg.abstractions import BackupStatus
+from borgwake.backup.abstractions import BackupStatus
 from borgwake.errors import ConfigurationError
 from borgwake.notifier.notifier import Notifier
 
