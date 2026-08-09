@@ -5,6 +5,7 @@ import os
 from typing import override
 
 from borgwake.errors import ConfigurationError
+from borgwake.fields import parse_field
 from borgwake.networking.device_locator import DeviceAddress, DeviceLocator
 from borgwake.networking.identifiers import validate_ip
 
@@ -20,14 +21,11 @@ def load_static_host_ip() -> str | None:
         ConfigurationError: if an env variable is set but invalid.
     """
 
-    raw_host_ip = os.getenv("HOST_STATIC_IP")
+    raw_host_ip = os.getenv("REMOTE_HOST_STATIC_IP")
     if raw_host_ip is None:
         return None
 
-    try:
-        return validate_ip(raw_host_ip)
-    except ValueError as e:
-        raise ConfigurationError(f"Invalid HOST_STATIC_IP: {raw_host_ip!r}") from e
+    return parse_field(raw_host_ip, validate_ip, "remote host static IP")
 
 
 class StaticIpLocator(DeviceLocator):

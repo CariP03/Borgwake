@@ -6,14 +6,16 @@ entry point) depends only on `compose`.
 """
 
 import logging
-from collections.abc import Coroutine
-from typing import Any
 
 from kasa import Device, Discover, KasaException
 
 from borgwake.backup.abstractions import BackupExecutor, BackupStatus
 from borgwake.backup.borg import BorgBackupExecutor, load_borg_backup_settings
-from borgwake.backup.job_parser import load_backup_jobs, load_backup_jobs_settings
+from borgwake.backup.job_parser import (
+    load_backup_jobs,
+    load_backup_jobs_loading_settings,
+    parse_backup_jobs,
+)
 from borgwake.errors import ConfigurationError, HostResolutionError
 from borgwake.kasa.kasa_loader import KasaSettings, load_kasa_settings
 from borgwake.kasa.kasa_locator import KasaLocator
@@ -21,7 +23,7 @@ from borgwake.kasa.kasa_plug import KasaPlug
 from borgwake.networking.arp_locator import ArpLocator, load_arp_settings
 from borgwake.networking.device_locator import DeviceLocator
 from borgwake.networking.reachability_checker import ReachabilityChecker
-from borgwake.networking.static_ip_locator import StaticIpLocator, load_static_ip
+from borgwake.networking.static_ip_locator import StaticIpLocator, load_static_host_ip
 from borgwake.notifier.notifier import Notifier
 from borgwake.power.abstractions import TurnableOff
 from borgwake.power.remote_host_power_controller import RemoteHostPowerController
@@ -33,11 +35,12 @@ from borgwake.workflow import run_workflow
 logger = logging.getLogger(__name__)
 
 
-async def compose() -> Coroutine[Any, Any, BackupStatus]:
-    """Build the object graph and return the workflow, ready to be awaited.
+async def compose() -> BackupStatus:
+    """Build the object graph, run the workflow, and return its outcome.
 
-    The returned coroutine owns the lifetime of the plug connection: awaiting it
-    runs the workflow and disconnects the plug afterwards.
+    Owns the full lifecycle of the plug's connection: the connection is
+    opened before the workflow runs and is always closed afterwards, even if
+    the workflow raises.
 
     Raises:
         ConfigurationError: if a required component is missing from the environment.
@@ -49,26 +52,30 @@ async def compose() -> Coroutine[Any, Any, BackupStatus]:
 
     kasa_settings = _require(load_kasa_settings(), "Kasa plug")
     device = await _connect_plug(kasa_settings)
-    plug = KasaPlug(device, kasa_settings.power_cycle_delay)
 
-    power_controller = RemoteHostPowerController(
-        activator=plug,
-        sleeper=_build_shutdown(plug, host, reachability_checker),
-    )
+    async with KasaPlug(device, kasa_settings.power_cycle_delay) as plug:
+        power_controller = RemoteHostPowerController(
+            activator=plug,
+            sleeper=_build_shutdown(plug, host, reachability_checker),
+        )
 
-    jobs = load_backup_jobs(load_backup_jobs_settings())
-    executor = _build_backup_executor(host)
-    notifier = _build_notifier()
+        jobs_loading_settings = _require(
+            load_backup_jobs_loading_settings(), "Backup jobs settings"
+        )
+        jobs = parse_backup_jobs(
+            load_backup_jobs(jobs_loading_settings.jobs_file),
+            jobs_loading_settings.scripts_dir,
+        )
+        executor = _build_backup_executor(host)
+        notifier = _build_notifier()
 
-    workflow = run_workflow(
-        power_controller,
-        reachability_checker,
-        jobs,
-        executor,
-        notifier,
-    )
-
-    return _run_and_disconnect(workflow, device)
+        return await run_workflow(
+            power_controller,
+            reachability_checker,
+            jobs,
+            executor,
+            notifier,
+        )
 
 
 async def _resolve_host() -> str:
@@ -95,7 +102,7 @@ async def _resolve_host() -> str:
 def _build_host_locator() -> DeviceLocator:
     """Select the addressing strategy for the remote host."""
 
-    static_ip = load_static_ip()
+    static_ip = load_static_host_ip()
     if static_ip is not None:
         logger.debug("Locating the remote host by static IP.")
         return StaticIpLocator(static_ip)
@@ -182,20 +189,6 @@ def _build_notifier() -> Notifier:
 
     settings = _require(load_telegram_bot_settings(), "Telegram bot")
     return TelegramNotifier(settings)
-
-
-async def _run_and_disconnect(
-    workflow: Coroutine[Any, Any, BackupStatus], device: Device
-) -> BackupStatus:
-    """Await the workflow, then release the plug connection."""
-
-    try:
-        return await workflow
-    finally:
-        try:
-            await device.disconnect()
-        except Exception:
-            logger.warning("Failed to disconnect from the Kasa plug.", exc_info=True)
 
 
 def _require[T](component: T | None, name: str) -> T:

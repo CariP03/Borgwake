@@ -13,6 +13,7 @@ from borgwake.backup.abstractions import (
     BackupJob,
     BackupStatus,
 )
+from borgwake.paths import validate_path_is_a_directory
 
 logger = getLogger(__name__)
 
@@ -27,7 +28,7 @@ class BorgBackupSettings:
 
     host: str
     username: str
-    repo_base_path: Path
+    repos_dir: Path
 
 
 def load_borg_backup_settings(host: str) -> BorgBackupSettings | None:
@@ -37,13 +38,15 @@ def load_borg_backup_settings(host: str) -> BorgBackupSettings | None:
     """
 
     username = os.getenv("BACKUP_USERNAME")
-    repo_base_path_raw = os.getenv("BACKUP_BASE_PATH")
+    repos_dir_raw = os.getenv("BACKUP_REPOS_DIR")
 
-    if username is None or repo_base_path_raw is None:
+    if username is None or repos_dir_raw is None:
         return None
 
+    repos_dir = validate_path_is_a_directory(Path(repos_dir_raw))
+
     return BorgBackupSettings(
-        host=host, username=username, repo_base_path=Path(repo_base_path_raw)
+        host=host, username=username, repos_dir=repos_dir
     )
 
 

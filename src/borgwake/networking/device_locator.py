@@ -18,5 +18,3 @@ class DeviceLocator(ABC):
     @abstractmethod
     async def locate_device(self) -> DeviceAddress | None:
         """Get both IP and MAC address of the device or None if the device could not be located."""
-
-        pass

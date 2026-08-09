@@ -10,7 +10,7 @@ from typing import override
 from scapy.layers.l2 import ARP, Ether
 from scapy.sendrecv import srp
 
-from borgwake.errors import ConfigurationError
+from borgwake.fields import parse_field
 from borgwake.networking.device_locator import DeviceAddress, DeviceLocator
 from borgwake.networking.identifiers import compare_mac, validate_mac, validate_subnet
 
@@ -44,34 +44,14 @@ def load_arp_settings() -> ArpSettings | None:
     if raw_target_mac is None:
         return None
 
-    try:
-        target_mac = validate_mac(raw_target_mac)
-    except ValueError as e:
-        raise ConfigurationError(
-            f"Invalid REMOTE_HOST_MAC: {raw_target_mac!r}"
-        ) from e
-
     raw_subnet = os.getenv("ARP_SUBNET", _DEFAULT_SUBNET)
-    try:
-        subnet = validate_subnet(raw_subnet)
-    except ValueError as e:
-        raise ConfigurationError(f"Invalid ARP_SUBNET: {raw_subnet!r}") from e
-
     raw_attempts = os.getenv("ARP_ATTEMPTS", _DEFAULT_ATTEMPTS)
-    try:
-        attempts = int(raw_attempts)
-    except ValueError as e:
-        raise ConfigurationError(
-            f"Invalid ARP_ATTEMPTS: {raw_attempts!r} is not an integer."
-        ) from e
-
     raw_timeout = os.getenv("ARP_TIMEOUT", _DEFAULT_TIMEOUT)
-    try:
-        timeout = int(raw_timeout)
-    except ValueError as e:
-        raise ConfigurationError(
-            f"Invalid ARP_TIMEOUT: {raw_timeout!r} is not an integer."
-        ) from e
+
+    target_mac = parse_field(raw_target_mac, validate_mac, "remote host MAC")
+    subnet = parse_field(raw_subnet, validate_subnet, "ARP subnet")
+    attempts = parse_field(raw_attempts, int, "ARP attempts")
+    timeout = parse_field(raw_timeout, int, "ARP timeout")
 
     return ArpSettings(
         target_mac=target_mac,

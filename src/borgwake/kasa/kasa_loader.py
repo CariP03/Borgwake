@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from kasa import Credentials
 
 from borgwake.errors import ConfigurationError
+from borgwake.fields import parse_field
 from borgwake.networking.identifiers import validate_mac
+
+_DEFAULT_POWER_CYCLE_DELAY = 10
 
 
 @dataclass(frozen=True)
@@ -15,6 +18,7 @@ class KasaSettings:
 
     credentials: Credentials
     plug_mac: str
+    power_cycle_delay: int
 
 
 def load_kasa_settings() -> KasaSettings | None:
@@ -27,6 +31,7 @@ def load_kasa_settings() -> KasaSettings | None:
     kasa_email = os.getenv("KASA_EMAIL")
     kasa_password = os.getenv("KASA_PASSWORD")
     kasa_plug_mac = os.getenv("KASA_PLUG_MAC")
+    kasa_power_cycle_delay = os.getenv("KASA_POWER_CYCLE_DELAY", _DEFAULT_POWER_CYCLE_DELAY)
 
     if kasa_email is None and kasa_password is None and kasa_plug_mac is None:
         return None
@@ -36,16 +41,11 @@ def load_kasa_settings() -> KasaSettings | None:
             "Kasa Plug is partially configured: All KASA_EMAIL, KASA_PASSWORD and KASA_PLUG_MAC must be set."
         )
 
-    try:
-        kasa_email = _validate_email(kasa_email)
-    except ValueError as e:
-        raise ConfigurationError(f"Invalid Kasa e-mail: {kasa_email!r}") from e
-    try:
-        kasa_plug_mac = validate_mac(kasa_plug_mac)
-    except ValueError as e:
-        raise ConfigurationError(f"Invalid Kasa plug MAC: {kasa_plug_mac!r}") from e
+    kasa_email = parse_field(kasa_email, _validate_email, "Kasa e-mail")
+    kasa_plug_mac = parse_field(kasa_plug_mac, validate_mac, "Kasa plug MAC")
+    kasa_power_cycle_delay = parse_field(kasa_power_cycle_delay, int, "Kasa power cycle delay")
 
-    return KasaSettings(Credentials(kasa_email, kasa_password), kasa_plug_mac)
+    return KasaSettings(Credentials(kasa_email, kasa_password), kasa_plug_mac, kasa_power_cycle_delay)
 
 
 def _validate_email(email: str) -> str:

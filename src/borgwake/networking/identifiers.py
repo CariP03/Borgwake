@@ -33,9 +33,7 @@ def validate_ip(ip: str) -> str:
 def is_valid_mac(mac: str) -> bool:
     """Validates MAC address."""
 
-    if re.match("[0-9a-f]{12}$", clean_mac(mac)):
-        return True
-    return False
+    return bool(re.match("[0-9a-f]{12}$", clean_mac(mac)))
 
 
 def validate_mac(mac: str) -> str:

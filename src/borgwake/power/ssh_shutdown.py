@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from logging import getLogger
 
-from borgwake.errors import ConfigurationError
+from borgwake.fields import parse_field
 from borgwake.networking.reachability_checker import ReachabilityChecker
 from borgwake.power.abstractions import ShutdownFailure, TurnableOff
 
@@ -37,12 +37,7 @@ def load_ssh_shutdown_settings() -> SSHShutdownSettings | None:
         return None
 
     raw_ssh_timeout = os.getenv("SHUTDOWN_TIME", _DEFAULT_SHUTDOWN_TIME)
-    try:
-        ssh_timeout = int(raw_ssh_timeout)
-    except ValueError as e:
-        raise ConfigurationError(
-            f"Invalid SHUTDOWN_TIME: {raw_ssh_timeout!r} is not an integer."
-        ) from e
+    ssh_timeout = parse_field(raw_ssh_timeout, int, "shutdown timeout")
 
     return SSHShutdownSettings(ssh_username, ssh_timeout)
 
@@ -96,5 +91,5 @@ class SSHShutdown(TurnableOff):
             logger.info("Remote host turned off successfully")
 
         except OSError as e:
-            logger.error("Failed to execute SSH command.", exc_info=True)
+            logger.exception("Failed to execute SSH command.")
             raise ShutdownFailure("Failed to shut down via SSH.") from e

@@ -2,7 +2,8 @@
 
 import asyncio
 import logging
-from typing import override
+from types import TracebackType
+from typing import Self, override
 
 from kasa import Device
 
@@ -22,6 +23,20 @@ class KasaPlug(TurnableOn, TurnableOff):
     def __init__(self, device: Device, power_cycle_delay: int):
         self._device = device
         self._power_cycle_delay = power_cycle_delay
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        try:
+            await self._device.disconnect()
+        except Exception:
+            logger.warning("Failed to disconnect from the Kasa plug.", exc_info=True)
 
     @override
     async def turn_on(self) -> None:

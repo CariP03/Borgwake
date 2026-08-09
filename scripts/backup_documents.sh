@@ -24,10 +24,7 @@ borg create                         \
     --exclude '*.log'		    \
                                     \
     ::'{hostname}-{now}'            \
-    /etc                            \
-    /home                           \
-    /root                           \
-    /var
+    /home/carip03/Downloads/test-file.txt   \
 
 backup_exit=$?
 

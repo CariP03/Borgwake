@@ -50,7 +50,7 @@ async def run_workflow(
         return status
 
     except ReachabilityCheckError as e:
-        logger.error(
+        logger.exception(
             "An error has occurred while trying to check the status of the remote host. Error: %s",
             e,
         )
@@ -58,7 +58,7 @@ async def run_workflow(
         status = BackupStatus.ERROR
         return status
     except TurnOnFailure as e:
-        logger.error(
+        logger.exception(
             "An error has occurred while trying to turn on the remote host. Error: %s",
             e,
         )
@@ -66,7 +66,7 @@ async def run_workflow(
         status = BackupStatus.ERROR
         return status
     except BackupExecutionError as e:
-        logger.error(
+        logger.exception(
             "An error has occurred while trying to execute the backup. Error: %s", e
         )
         status = BackupStatus.ERROR
@@ -79,22 +79,19 @@ async def run_workflow(
             if not was_host_online:
                 await power_controller.turn_off()
         except ShutdownFailure as e:
-            logger.error(
-                "An error has occurred while trying to shutdown the remote host. Error: %s",
-                e,
-            )
-
             shutdown_error = e
+
             if status != BackupStatus.ERROR:
                 status = BackupStatus.WARNING
 
         try:
             await notifier.notify(status)
         except NotifierError as e:
-            logger.error(
-                "An error has occurred while trying to notify the notifier. Error: %s",
-                e,
-            )
+            if shutdown_error is not None:
+                raise ExceptionGroup(
+                    "Multiple failures during workflow cleanup", [shutdown_error, e]
+                )
             raise
+
         if shutdown_error is not None:
             raise shutdown_error

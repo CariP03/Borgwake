@@ -2,55 +2,51 @@ import asyncio
 import logging
 import sys
 
-from src.borgwake.core.backup import BackupError, cycle_backups
-from src.borgwake.remote_host import host_commands as host
-from src.borgwake.remote_host.host_commands import HostError
-from src.borgwake.remote_host.plug_init import PlugInitError
-from src.borgwake.utils.logger import setup_logging
-from src.borgwake.utils.telegram_bot import send_backup_result
+from dotenv import load_dotenv
+
+from borgwake.composition_root import compose
+from borgwake.errors import ConfigurationError, HostResolutionError
+from borgwake.logger import (
+    default_logging_settings,
+    load_logging_settings,
+    setup_logging,
+)
+from borgwake.notifier.notifier import NotifierError
+from borgwake.power.abstractions import ShutdownFailure
+
+logger = logging.getLogger(__name__)
 
 
-async def main():
-    setup_logging()
-
-    logger = logging.getLogger(__name__)
-
-    was_online = None
+async def main() -> int:
     try:
-        was_online = await host.start_host()
-        exit_code = cycle_backups()
+        logger_settings = load_logging_settings()
+    except ConfigurationError as e:
+        logger_settings = default_logging_settings()
+        setup_logging(logger_settings)
 
-    except BackupError as e:
-        logger.critical("Aborting: backup process failed", exc_info=True)
-        exit_code = 2
+        logging.getLogger(__name__).error("Failed to load logging settings: %s", e)
+        return 1
 
-    except PlugInitError as e:
-        logger.critical("Startup failed: plug not initialized", exc_info=True)
-        exit_code = 2
+    setup_logging(logger_settings)
 
-    except FileNotFoundError as e:
-        logger.critical("Script directory not found", exc_info=True)
-        exit_code = 2
-
-    except HostError as e:
-        logger.critical("Unable to reach the remote host", exc_info=True)
-        exit_code = 2
-
-    except Exception as e:
-        logger.critical("Unexpected fatal error", exc_info=True)
-        exit_code = 2
-
-    finally:
-        # turn off the remote host
-        if not was_online:
-            await host.turn_off()
-
-        # close connection with plug
-        await host.close_plug()
-
-    await send_backup_result(exit_code)
-    return exit_code
+    try:
+        status = await compose()
+        logger.info("Workflow completed with status: %s", status)
+        return 0
+    except ExceptionGroup as eg:
+        for exc in eg.exceptions:
+            logger.error("A failure occurred: %s", exc, exc_info=exc)
+        return 1
+    except (
+        ShutdownFailure,
+        NotifierError,
+        ConfigurationError,
+        HostResolutionError,
+    ) as e:
+        logger.error("A failure occurred: %s", e, exc_info=e)
+        return 1
 
 
 if __name__ == "__main__":
+    load_dotenv()
     sys.exit(asyncio.run(main()))

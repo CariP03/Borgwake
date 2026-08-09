@@ -1,27 +1,45 @@
 """Parses raw repository configuration data into BackupJob instances."""
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 from borgwake.backup.abstractions import BackupJob
 from borgwake.errors import ConfigurationError
+from borgwake.paths import validate_path_is_a_directory, validate_path_is_a_file
 from borgwake.yaml_reader import load_yaml
 
 _REQUIRED_KEYS = ("repo_name", "script_name", "repo_passphrase")
 
 
-def load_backup_jobs() -> list[dict] | None:
-    """Load the backup jobs from the repository.
+@dataclass
+class BackupJobsLoadingSettings:
+    jobs_file: Path
+    scripts_dir: Path
 
-    Returns None if BACKUP_JOBS_YAML_PATH is not set.
+
+def load_backup_jobs_loading_settings() -> BackupJobsLoadingSettings | None:
+    """Loads backup jobs loading settings from the environment.
+
+    Returns None if any of the settings is not set.
     """
 
-    raw_jobs_yaml_path = os.getenv("BACKUP_JOBS_YAML_PATH")
+    raw_jobs_file = os.getenv("BACKUP_JOBS_FILE")
+    raw_scripts_dir = os.getenv("BACKUP_SCRIPTS_DIR")
 
-    if raw_jobs_yaml_path is None:
+    if raw_jobs_file is None or raw_scripts_dir is None:
         return None
 
-    return load_yaml(Path(raw_jobs_yaml_path))
+    jobs_file = validate_path_is_a_file(Path(raw_jobs_file))
+    scripts_dir = validate_path_is_a_directory(Path(raw_scripts_dir))
+
+    return BackupJobsLoadingSettings(jobs_file, scripts_dir)
+
+
+def load_backup_jobs(yaml_path: Path) -> list[dict] | None:
+    """Load the backup jobs from the repository."""
+
+    return load_yaml(yaml_path)
 
 
 def parse_backup_jobs(repos_data: list[dict], scripts_dir: Path) -> list[BackupJob]:
